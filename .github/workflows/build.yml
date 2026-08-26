@@ -1,0 +1,78 @@
+name: build-and-probe
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-unsigned-device-app:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project
+        run: brew install xcodegen && cd probe && xcodegen generate
+      - name: Build unsigned (device)
+        run: |
+          cd probe
+          xcodebuild -scheme HealthProbe -configuration Release \
+            -destination 'generic/platform=iOS' -derivedDataPath dd \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGN_IDENTITY="" build
+      - name: Package ipa
+        run: |
+          mkdir Payload
+          cp -R probe/dd/Build/Products/Release-iphoneos/HealthProbe.app Payload/
+          zip -qry HealthProbe-unsigned.ipa Payload
+          unzip -l HealthProbe-unsigned.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HealthProbe-unsigned-ipa
+          path: HealthProbe-unsigned.ipa
+
+  codesign-tolerance-demo:
+    runs-on: macos-15
+    steps:
+      - name: Sign a binary claiming com.apple.developer.healthkit with NO provisioning profile
+        run: |
+          cat > hk.entitlements <<'XML'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0"><dict><key>com.apple.developer.healthkit</key><true/></dict></plist>
+          XML
+          cp /bin/echo ./victim
+          set -x
+          codesign --force -s - --entitlements hk.entitlements ./victim
+          echo "codesign exit code: $?  <-- signing layer did NOT reject the unauthorized entitlement"
+          codesign -d --entitlements :- ./victim
+          echo "NOTE: no provisioning profile was consulted anywhere in this step."
+
+  simulator-control:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate project
+        run: brew install xcodegen && cd probe && xcodegen generate
+      - name: Resolve simulator
+        run: |
+          xcrun simctl list devices available
+          SIM=$(xcrun simctl list devices available | grep -m1 -E 'iPhone' | sed -E 's/.*\(([-0-9A-F]{36})\).*/\1/')
+          echo "UDID=$SIM" >> $GITHUB_ENV
+      - name: Build (simulator)
+        run: |
+          cd probe
+          xcodebuild -scheme HealthProbe -configuration Release \
+            -destination "platform=iOS Simulator,id=$UDID" -derivedDataPath dd build
+      - name: Install + launch probe, capture stages
+        run: |
+          APP=$(find probe/dd/Build/Products -name 'HealthProbe.app' -path '*iphonesimulator*' | head -1)
+          xcrun simctl boot "$UDID" || true
+          xcrun simctl install "$UDID" "$APP"
+          set -o pipefail
+          SIMCTL_CHILD_PROBE_AUTOEXIT=1 xcrun simctl launch --console-pty "$UDID" \
+            work.danieltuma.healthprobe 2>&1 | tee sim-output.txt
+          grep -q 'PROBE|IS_AVAILABLE|PASS|.*true' sim-output.txt && \
+            echo "Simulator: isHealthDataAvailable == true WITHOUT any entitlement/profile -> Simulator does not enforce HealthKit entitlements"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: simulator-probe-output
+          path: sim-output.txt

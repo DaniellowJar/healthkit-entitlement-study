@@ -1,0 +1,28 @@
+name: HealthProbe
+options:
+  bundleIdPrefix: work.danieltuma
+  deploymentTarget:
+    iOS: "17.0"
+targets:
+  HealthProbe:
+    type: application
+    platform: iOS
+    sources: [Sources]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: work.danieltuma.healthprobe
+        INFOPLIST_FILE: Resources/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        TARGETED_DEVICE_FAMILY: "1,2"
+        SWIFT_VERSION: "5.9"
+        CODE_SIGN_STYLE: Manual
+        CODE_SIGN_IDENTITY: ""
+        CODE_SIGNING_REQUIRED: NO
+        CODE_SIGN_ENTITLEMENTS: ""
+schemes:
+  HealthProbe:
+    build:
+      targets:
+        HealthProbe: all
+    run:
+      config: Release

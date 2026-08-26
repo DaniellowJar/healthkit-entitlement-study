@@ -1,0 +1,8 @@
+artifacts/
+.venv/
+*.p12
+*.mobileprovision
+*.ipa
+*.app.zip
+secrets*
+.env
