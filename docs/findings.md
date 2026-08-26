@@ -29,6 +29,19 @@ PROBE|DONE
 - Layer-6 (`requestAuthorization`) **gated even in Simulator** with explicit error text — a runtime
   API-level check independent of provisioning profiles. Error string is a reusable detector.
 
+## LiveContainer guest test (real hardware, iPad14,1 / iOS 27.0b)
+Unsigned probe ipa loaded as LiveContainer guest (guest code executes under LC host's entitlements):
+```
+INIT          PASS
+IS_AVAILABLE  isHealthDataAvailable() == false   ← on-device, no entitlement anywhere in process
+REQUEST_AUTH  skipped/FAIL
+QUERY         skipped/FAIL
+```
+- Layer-5 IS gated on real hardware: `isHealthDataAvailable() == false` without a healthkit-entitled
+  process — while the identical unsigned binary returns `true` in Simulator.
+- Confirms entitlement evaluation is **process-scoped at exec time** (kernel/AMFI), not bundle-scoped:
+  a guest app cannot "bring its own" HealthKit rights into an unentitled host process.
+
 ## Free-tier reality check
 - Personal-team profiles minted via AltServer/iLoader/SideStore contain no restricted capabilities.
 - HealthKit on physical hardware requires paid membership ($99/yr). No documented legitimate bypass.
