@@ -96,3 +96,15 @@ none to `HKHealthStore`, with an unentitled profile.
 
 Legitimate mirror: **ad-hoc borrowing with consent** — a paid member adds your UDID and signs
 your app under their HealthKit-authorized profile. Fully supported, works for up to 1 year.
+
+## FAQ: "AppDB / leaked enterprise certs?"
+Real ecosystem: leaked or bulk-bought **enterprise** in-house certs (no UDID list → anyone
+installs; some profiles include HealthKit → works briefly). Why it's not a solution:
+1. **Revocation burn-cycle** — Apple sweeps them in days–weeks; on revocation every signed app
+   dies **at launch** (AMFI SIGKILL). This is matrix row 4 observed at ecosystem scale — the
+   strongest public proof that the launch layer exists.
+2. Health permissions granted to untrusted, anonymous-provenance binaries.
+3. Useless for shipping your own app (re-sign treadmill, permission churn).
+4. Knowingly using stolen signing identities = fraud territory; out of scope for this study.
+
+Conclusion unchanged: consented ad-hoc / paid membership / Shortcuts remain the only stable paths.
