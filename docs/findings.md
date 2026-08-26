@@ -86,3 +86,13 @@ none to `HKHealthStore`, with an unentitled profile.
 - HealthKit on physical hardware requires paid membership ($99/yr). No documented legitimate bypass.
 - Documented no-cost paths: iOS **Simulator** (full API, synthetic data) and **Shortcuts**
   (system app; native Read/Write Health actions without third-party entitlements).
+
+## FAQ: "What if we use another company's cert?"
+| You have | Blocking mechanism | Result |
+|---|---|---|
+| Their cert only | no matching private key → cannot sign | unusable |
+| Cert + key | profile must embed that cert serial + their App ID + your device UDID | `0xe8008015` / "profile not applicable" |
+| Cert + key + matching profile (stolen kit) | installs, but Apple abuse-sweeps revoke → **AMFI SIGKILL at launch** for every app signed with it; also fraud | works briefly, then mass-death |
+
+Legitimate mirror: **ad-hoc borrowing with consent** — a paid member adds your UDID and signs
+your app under their HealthKit-authorized profile. Fully supported, works for up to 1 year.
