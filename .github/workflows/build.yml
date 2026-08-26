@@ -70,8 +70,10 @@ jobs:
           set -o pipefail
           SIMCTL_CHILD_PROBE_AUTOEXIT=1 xcrun simctl launch --console-pty "$UDID" \
             work.danieltuma.healthprobe 2>&1 | tee sim-output.txt
-          grep -q 'PROBE|IS_AVAILABLE|PASS|.*true' sim-output.txt && \
-            echo "Simulator: isHealthDataAvailable == true WITHOUT any entitlement/profile -> Simulator does not enforce HealthKit entitlements"
+          grep -q 'IS_AVAILABLE.*true' sim-output.txt && \
+            echo "Simulator: isHealthDataAvailable == true WITHOUT any entitlement/profile -> availability not gated in Simulator"
+          grep -q 'Missing com.apple.developer.healthkit entitlement' sim-output.txt && \
+            echo "Simulator: requestAuthorization still refuses without entitlement -> runtime API-level gate exists even in Simulator"
       - uses: actions/upload-artifact@v4
         with:
           name: simulator-probe-output
