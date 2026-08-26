@@ -5,7 +5,7 @@
 | # | Layer | Mechanism | Experiment | Hypothesis | Observed |
 |---|-------|-----------|------------|------------|----------|
 | 1 | IDE / portal | App-ID capability allow-list per team type | n/a (no Mac) — inferred from minted profile contents | Free (Personal) teams cannot register HealthKit capability; profile can never contain `com.apple.developer.healthkit` | _pending_ |
-| 2 | `codesign` CLI | None — signs any entitlements blob it is given | CI `codesign-tolerance-demo` job | Exit 0, entitlement embedded silently | _pending_ |
+| 2 | `codesign` CLI | None — signs any entitlements blob it is given | CI `codesign-tolerance-demo` job | Exit 0, entitlement embedded silently | **CONFIRMED**: job green; `codesign --force -s - --entitlements hk.entitlements` exit 0, blob verifiable via `codesign -d --entitlements :-`; no profile consulted |
 | 3 | Install (`installd`) | Binary entitlements ⊄ profile entitlements ⇒ reject | Install V1 via pymobiledevice3 | Rejection with `0xe8008xxx` family ("not entitled"/"invalid entitlements") | _pending_ |
 | 4 | Launch (AMFI/kernel) | Entitlements/profile re-checked at exec; profile validity & cert chain | Cert revocation relaunch test | SIGKILL (Code Signature Invalid), AMFI syslog lines | _pending_ |
 | 5 | `HKHealthStore.isHealthDataAvailable()` | Returns NO on device when process lacks healthkit entitlement | V0 runtime probe | `false` on device; `true` in Simulator | _pending_ |
@@ -16,6 +16,18 @@
   CMS blob present, **no embedded.mobileprovision** → predicted outcome at install: layer-3 rejection
   (or launch kill if a stale/mismatched profile is attached).
 - Observed: _pending_
+
+## Simulator control (CI run 32915832097 / 32916164824)
+Baseline build (no entitlements file, no profile, unsigned):
+```
+PROBE|INIT|PASS|HKHealthStore instance created
+PROBE|IS_AVAILABLE|RUN|isHealthDataAvailable() == true
+PROBE|REQUEST_AUTH|FAIL|error: Missing com.apple.developer.healthkit entitlement.
+PROBE|DONE
+```
+- Layer-5 (`isHealthDataAvailable`) **not gated** in Simulator (returns true sans entitlement).
+- Layer-6 (`requestAuthorization`) **gated even in Simulator** with explicit error text — a runtime
+  API-level check independent of provisioning profiles. Error string is a reusable detector.
 
 ## Free-tier reality check
 - Personal-team profiles minted via AltServer/iLoader/SideStore contain no restricted capabilities.
