@@ -59,7 +59,7 @@ final class ProbeRunner: ObservableObject {
             return
         }
 
-        let steps = HKQuantityType(.stepCount)!
+        let steps = HKQuantityType(.stepCount)
         let sleep = HKCategoryType(.sleepAnalysis)
 
         do {
@@ -72,7 +72,7 @@ final class ProbeRunner: ObservableObject {
         }
 
         let sort = NSSortDescriptor(key: HKSampleSortIdentifierEndDate, ascending: false)
-        let q = HKSampleQuery(sampleType: steps, limit: 5, sortDescriptors: [sort]) { _, samples, err in
+        let q = HKSampleQuery(sampleType: steps, predicate: nil, limit: 5, sortDescriptors: [sort]) { _, samples, err in
             Task { @MainActor in
                 if let err {
                     self.stage("QUERY", "steps query error: \(err.localizedDescription)", false)
