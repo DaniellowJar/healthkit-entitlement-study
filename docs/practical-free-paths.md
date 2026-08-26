@@ -26,11 +26,22 @@ Shortcuts runs inside Apple's own process and has native Health read/write actio
    - Start/End wired from the Adjust Date actions
 4. Run it whenever; chain multiple Adjust/Log pairs for multiple sessions.
 
+### What Shortcuts can read vs write
+| Direction | Action | Types |
+|---|---|---|
+| read | Find Health Samples | everything Health stores (steps, sleep, HR, weight, workouts, …) |
+| write | Log Health Sample | sleep analysis, weight/body measurements, nutrition & water, many vitals |
+| write | Log Workout | workouts (type, distance, duration, kcal) |
+| ✗ write | steps | system-derived from motion coprocessor — cannot be injected |
+| ✗ | clinical records / ECG | not exposed to Shortcuts |
+
+Entries are attributed to source **Shortcuts** (visible in Health ▸ Show All Data) and cannot
+be disguised — provenance enforcement mirrors the app-side story in this study.
+
 Notes:
 - First run asks for Health write/read permission once — that's Shortcuts' own entitlement,
   no developer account involved.
-- Entries are attributed to source **Shortcuts** in Health ▸ Show All Data — provenance is
-  visible and cannot be spoofed (same enforcement story as this study).
+- Everything stays on-device unless an upload/share action is added (Files, ownCloud, HTTP…).
 
 ## 2. iOS Simulator (for *developing* your app)
 `xcodebuild`-built apps run against HealthKit fully in the Simulator with zero signing —
