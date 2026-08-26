@@ -12,6 +12,10 @@
 	<string>APPL</string>
 	<key>CFBundleDisplayName</key>
 	<string>HealthProbe</string>
+	<key>UIFileSharingEnabled</key>
+	<true/>
+	<key>LSSupportsOpeningDocumentsInPlace</key>
+	<true/>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleVersion</key>

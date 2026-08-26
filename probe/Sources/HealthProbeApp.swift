@@ -44,9 +44,32 @@ final class ProbeRunner: ObservableObject {
         results.append(StageResult(name: name, ok: ok, detail: detail))
         print("PROBE|\(name)|\(ok.map { $0 ? "PASS" : "FAIL" } ?? "RUN")|\(detail)")
         log.info("stage=\(name, privacy: .public) ok=\(ok ?? false) \(detail, privacy: .public)")
+        persist()
+    }
+
+    private var lines: [String] = []
+
+    private func persist() {
+        let fm = FileManager.default
+        guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first else { return }
+        lines = results.map {
+            "\($0.name)|\($0.ok.map { $0 ? "PASS" : "FAIL" } ?? "RUN")|\($0.detail)"
+        }
+        let text = ("# HealthProbe report \(Date())\n" + lines.joined(separator: "\n") + "\n")
+        try? text.write(to: dir.appendingPathComponent("probe-report.txt"), atomically: true, encoding: .utf8)
+    }
+
+    private func exportProfile() {
+        let fm = FileManager.default
+        guard let dir = fm.urls(for: .documentDirectory, in: .userDomainMask).first,
+              let prof = Bundle.main.url(forResource: "embedded", withExtension: "mobileprovision") else { return }
+        let dst = dir.appendingPathComponent("embedded.mobileprovision")
+        try? fm.removeItem(at: dst)
+        try? fm.copyItem(at: prof, to: dst)
     }
 
     func runAll() async {
+        exportProfile()
         stage("INIT", "HKHealthStore instance created", true)
 
         let available = HKHealthStore.isHealthDataAvailable()
